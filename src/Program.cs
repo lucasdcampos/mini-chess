@@ -3,7 +3,50 @@
     static void Main(string[] args)
     {
         var board = new Board();
-        DrawBoard(board);
+        while (true)
+        {
+            DrawBoard(board);
+            Console.Write("> ");
+            string? input = Console.ReadLine()?.Trim().ToLower();
+
+            if (input == "exit" || input == "quit")
+                break;
+
+            if (string.IsNullOrEmpty(input))
+                continue;
+
+            if (!IsValidMoveInput(input))
+            {
+                Console.WriteLine("Invalid move format. Use format like 'e2e4'.");
+                continue;
+            }
+
+            int startSquare = ConvertToSquareIndex(input[0], input[1]);
+            int targetSquare = ConvertToSquareIndex(input[2], input[3]);
+
+            board.MakeMove(new Move(startSquare, targetSquare));
+        }
+
+    }
+
+    static bool IsValidMoveInput(string input)
+    {
+        if (input.Length != 4)
+            return false;
+
+        return
+            input[0] is >= 'a' and <= 'h' &&
+            input[1] is >= '1' and <= '8' &&
+            input[2] is >= 'a' and <= 'h' &&
+            input[3] is >= '1' and <= '8';
+    }
+
+
+    static int ConvertToSquareIndex(char file, char rank)
+    {
+        int x = file - 'a';
+        int y = rank - '1';
+        return y * 8 + x;
     }
 
     static void DrawBoard(Board board)

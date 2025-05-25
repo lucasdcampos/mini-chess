@@ -8,6 +8,12 @@ public class Board
         LoadPositionFromFen(InitialPositionFEN);
     }
 
+    public void MakeMove(Move move)
+    {
+        Squares![move.TargetSquare] = Squares[move.StartSquare];
+        Squares[move.StartSquare] = Piece.None;
+    }
+
     public void LoadPositionFromFen(string fen)
     {
         string piecePlacement = fen.Split(' ')[0];
