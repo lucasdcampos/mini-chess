@@ -109,7 +109,7 @@ public static class Engine
             {
                 board.MakeMove(move);
 
-                if (depth == 1 && !move.IsCapture() && Evaluator.Evaluate(board) + 100 < alpha)
+                if (depth == 1 && !move.IsCapture && Evaluator.Evaluate(board) + 100 < alpha)
                 {
                     board.UnmakeMove();
                     continue;
@@ -136,7 +136,7 @@ public static class Engine
             {
                 board.MakeMove(move);
 
-                if (depth == 1 && !move.IsCapture() && Evaluator.Evaluate(board) - 100 > beta)
+                if (depth == 1 && !move.IsCapture && Evaluator.Evaluate(board) - 100 > beta)
                 {
                     board.UnmakeMove();
                     continue;

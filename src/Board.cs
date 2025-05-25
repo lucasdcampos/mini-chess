@@ -16,27 +16,41 @@ public class Board
         LoadPositionFromFen(InitialPositionFEN);
     }
 
+    public Move LastMove => m_history.Count > 0 ? m_history.Peek() : new Move(0,0);
+
     public void MakeMove(Move move)
     {
         int movedPiece = Squares![move.StartSquare];
-        int capturedPiece = Squares[move.TargetSquare];
-        int promotionPiece = 0;
+        int capturedPiece = move.EnPassant
+            ? Squares[move.TargetSquare - (IsWhiteToMove ? 8 : -8)]
+            : Squares[move.TargetSquare];
 
+        // En Passant handling
+        if (move.EnPassant)
+        {
+            int enPassantCaptureSquare = move.TargetSquare - (IsWhiteToMove ? 8 : -8);
+            Squares[enPassantCaptureSquare] = Piece.None; // Remove the captured pawn
+        }
+
+        // Update board state
+        Squares[move.TargetSquare] = movedPiece;
+        Squares[move.StartSquare] = Piece.None;
+
+        // Push move to history
         var fullMove = new Move(
             move.StartSquare,
             move.TargetSquare,
             movedPiece,
             capturedPiece,
-            promotionPiece,
-            IsWhiteToMove
+            move.PromotionPiece,
+            IsWhiteToMove,
+            move.DoublePawnPush,
+            move.EnPassant
         );
 
         m_history.Push(fullMove);
 
-        Squares[move.TargetSquare] = movedPiece;
-        Squares[move.StartSquare] = Piece.None;
-
-        IsWhiteToMove = !IsWhiteToMove;
+         IsWhiteToMove = !IsWhiteToMove;
     }
 
     public void UnmakeMove()

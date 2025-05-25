@@ -110,14 +110,16 @@ public static class Generator
         // Simple push
         if (IsOnBoard(forwardSquare) && board.Squares![forwardSquare] == Piece.None)
         {
-            moves.Add(new Move(start, forwardSquare));
+            moves.Add(new Move(start, forwardSquare, piece, Piece.None, Piece.None, ownColor == Piece.White, false, false));
 
             // Double push
             if (startY == startRank)
             {
                 int doubleForward = forwardSquare + direction;
                 if (IsOnBoard(doubleForward) && board.Squares[doubleForward] == Piece.None)
-                    moves.Add(new Move(start, doubleForward));
+                {
+                    moves.Add(new Move(start, doubleForward, piece, Piece.None, Piece.None, ownColor == Piece.White, true, false));
+                }
             }
         }
 
@@ -136,10 +138,33 @@ public static class Generator
             int targetPiece = board.Squares![captureSquare];
             if (targetPiece != Piece.None && targetPiece.Color() != ownColor)
             {
-                moves.Add(new Move(start, captureSquare));
+                moves.Add(new Move(start, captureSquare, piece, targetPiece, Piece.None, ownColor == Piece.White, false, false));
+            }
+
+            // En Passant
+            var lastMove = board.LastMove;
+            if (lastMove.DoublePawnPush)
+            {
+                int enPassantTargetSquare = lastMove.TargetSquare;
+                int enPassantCaptureSquare = enPassantTargetSquare - direction;
+
+                // Check if the current pawn can perform En Passant
+                if (captureSquare == enPassantTargetSquare)
+                {
+                    moves.Add(new Move(
+                        start,
+                        enPassantTargetSquare,
+                        piece,
+                        lastMove.MovedPiece,
+                        Piece.None,
+                        ownColor == Piece.White,
+                        false,
+                        true)); // Mark as En Passant
+                }
             }
         }
     }
+
 
     private static void GenerateKnightMoves(Board board, int start, int piece, List<Move> moves)
     {
