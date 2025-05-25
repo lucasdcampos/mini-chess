@@ -8,4 +8,9 @@ public struct Move
         StartSquare = startSquare;
         TargetSquare = targetSquare;
     }
+
+    public override bool Equals(object? obj) =>
+        obj is Move other && StartSquare == other.StartSquare && TargetSquare == other.TargetSquare;
+
+    public override int GetHashCode() => HashCode.Combine(StartSquare, TargetSquare);
 }

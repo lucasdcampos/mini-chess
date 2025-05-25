@@ -24,6 +24,13 @@
             int startSquare = ConvertToSquareIndex(input[0], input[1]);
             int targetSquare = ConvertToSquareIndex(input[2], input[3]);
 
+            var legalMoves = Generator.GenerateMoves(board);
+            var move = new Move(startSquare, targetSquare);
+            if (!legalMoves.Contains(move))
+            {
+                Console.WriteLine("Illegal move. Try again.");
+                continue;
+            }
             board.MakeMove(new Move(startSquare, targetSquare));
         }
 

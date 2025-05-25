@@ -10,4 +10,14 @@ public static class Piece
 
     public const int White = 8;
     public const int Black = 16;
+
+    public static int Type(this int piece)
+    {
+        return piece & (Pawn | Knight | Bishop | Rook | Queen | King);
+    }
+
+    public static int Color(this int piece)
+    {
+        return piece & (White | Black);
+    }
 }

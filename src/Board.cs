@@ -2,9 +2,11 @@ public class Board
 {
     public int[]? Squares { get; private set; }
     public const string InitialPositionFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    public bool IsWhiteToMove { get; private set; }
     public Board()
     {
         Squares = new int[64];
+        IsWhiteToMove = true; // Should be set based on the FEN string later
         LoadPositionFromFen(InitialPositionFEN);
     }
 
