@@ -3,6 +3,13 @@ public class Board
     public int[]? Squares { get; private set; }
     public const string InitialPositionFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     public bool IsWhiteToMove { get; private set; }
+    public bool CanWhiteCastleKingside { get; set; } = true;
+    public bool CanWhiteCastleQueenside { get; set; } = true;
+    public bool CanBlackCastleKingside { get; set; } = true;
+    public bool CanBlackCastleQueenside { get; set; } = true;
+    public int EnPassantSquare { get; set; } = -1; // -1 means no en passant target square
+    public int HalfMoveClock { get; set; } = 0;
+    public int FullMoveNumber { get; set; } = 1;
     private Stack<Move> m_history;
 
     public IEnumerable<int> WhitePieces => GetPiecesByColor(Piece.White);
@@ -68,6 +75,11 @@ public class Board
     public void LoadPositionFromFen(string fen)
     {
         string piecePlacement = fen.Split(' ')[0];
+        string activeColor = fen.Split(' ')[1];
+        string castlingAvailability = fen.Split(' ')[2];
+        string enPassantTarget = fen.Split(' ')[3];
+        string halfMoveClock = fen.Split(' ')[4];
+        string fullMoveNumber = fen.Split(' ')[5];
 
         int x = 0;
         int y = 7;
@@ -113,6 +125,82 @@ public class Board
                 x++;
             }
         }
+
+        IsWhiteToMove = activeColor == "w";
+        CanWhiteCastleKingside = castlingAvailability.Contains('K');
+        CanWhiteCastleQueenside = castlingAvailability.Contains('Q');
+        CanBlackCastleKingside = castlingAvailability.Contains('k');
+        CanBlackCastleQueenside = castlingAvailability.Contains('q');
+        EnPassantSquare = enPassantTarget == "-" ? -1 : Utils.ConvertToSquareIndex(enPassantTarget[0], enPassantTarget[1]);
+        HalfMoveClock = int.Parse(halfMoveClock);
+        FullMoveNumber = int.Parse(fullMoveNumber);
+    }
+
+    public string ToFen()
+    {
+        var fen = new System.Text.StringBuilder();
+
+        for (int y = 7; y >= 0; y--)
+        {
+            int emptyCount = 0;
+
+            for (int x = 0; x < 8; x++)
+            {
+                int piece = Squares![y * 8 + x];
+
+                if (piece == Piece.None)
+                {
+                    emptyCount++;
+                }
+                else
+                {
+                    if (emptyCount > 0)
+                    {
+                        fen.Append(emptyCount);
+                        emptyCount = 0;
+                    }
+
+                    fen.Append(PieceToFenChar(piece));
+                }
+            }
+
+            if (emptyCount > 0)
+                fen.Append(emptyCount);
+
+            if (y > 0)
+                fen.Append('/');
+        }
+
+        fen.Append(IsWhiteToMove ? " w " : " b ");
+        if (CanWhiteCastleKingside) fen.Append('K');
+        if (CanWhiteCastleQueenside) fen.Append('Q');
+        if (CanBlackCastleKingside) fen.Append('k');
+        if (CanBlackCastleQueenside) fen.Append('q');
+        if(EnPassantSquare != -1)
+            fen.Append(' ').Append(Utils.SquareToString(EnPassantSquare));
+        else
+            fen.Append(" -");
+        fen.Append($" {HalfMoveClock} {FullMoveNumber}");
+        
+        return fen.ToString();
+    }
+
+    private char PieceToFenChar(int piece)
+    {
+        int type = piece.Type();
+        bool isWhite = piece.Color() == Piece.White;
+
+        char c = type switch
+        {
+            Piece.Pawn => 'p',
+            Piece.Rook => 'r',
+            Piece.Knight => 'n',
+            Piece.Bishop => 'b',
+            Piece.Queen => 'q',
+            Piece.King => 'k',
+            _ => '?'
+        };
+        return isWhite ? char.ToUpper(c) : c;
     }
 
     private IEnumerable<int> GetPiecesByColor(int color)

@@ -1,74 +1,82 @@
-﻿class Program
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public enum GameMode
+{
+    PlayerVsPlayer,
+    PlayerVsEngine,
+    EngineVsPlayer,
+    EngineVsEngine
+}
+
+class Program
 {
     static void Main(string[] args)
     {
+        Console.WriteLine("Mini-Chess Engine");
+
         var board = new Board();
 
         while (true)
         {
-            Utils.DrawBoard(board);
-
-            if (board.IsWhiteToMove)
+            string? input = Console.ReadLine()?.Trim().ToLower();
+            string[]? parts = input?.Split(' ');
+            string? cmd = parts![0];
+            switch (cmd)
             {
-                Console.Write("> ");
-                string? input = Console.ReadLine()?.Trim().ToLower();
-
-                if (input == "exit" || input == "quit" || input == "stop")
+                case "quit":
+                    Environment.Exit(0);
                     break;
-
-                if (string.IsNullOrEmpty(input))
+                case "eval":
+                    var eval = Evaluator.Evaluate(board);
+                    Utils.DrawBoard(board);
+                    Console.WriteLine($"Evaluation: {eval}");
                     continue;
+                case "fen":
+                    Console.WriteLine(board.ToFen());
+                    continue;
+                case "draw":
+                case "d":
+                    Utils.DrawBoard(board);
+                    Console.WriteLine("Fen: " + board.ToFen());
+                    continue;
+                case "go":
+                    int depth = 5;
+                    if (parts.Length == 2)
+                        int.TryParse(parts[1], out depth);
 
-                switch (input)
-                {
-                    case "undo":
-                        board.UnmakeMove();
+                    var bestMove = Engine.ChooseMove(board, depth);
+                    Console.WriteLine($"Best move: {Utils.SquareToString(bestMove.StartSquare)}{Utils.SquareToString(bestMove.TargetSquare)}");
+                    continue;
+                case "move":
+                    if (parts.Length != 2 || !Utils.IsValidMoveInput(parts[1]))
+                    {
+                        Console.WriteLine("Invalid move format. Use 'move e2e4' or similar.");
                         continue;
-                    case "eval":
-                        var eval = Evaluator.Evaluate(board);
-                        Console.WriteLine($"Evaluation: {Evaluator.Evaluate(board)}");
-                        if(eval > 0)
-                            Console.WriteLine("White is winning.");
-                        else if (eval < 0)
-                            Console.WriteLine("Black is winning.");
-                        else
-                            Console.WriteLine("Position is equal.");
+                    }
+
+                    int startSquare = Utils.ConvertToSquareIndex(parts[1][0], parts[1][1]);
+                    int targetSquare = Utils.ConvertToSquareIndex(parts[1][2], parts[1][3]);
+
+                    if (startSquare < 0 || startSquare >= 64 || targetSquare < 0 || targetSquare >= 64)
+                    {
+                        Console.WriteLine("Invalid square index.");
                         continue;
-                }
+                    }
 
-                if (!Utils.IsValidMoveInput(input))
-                {
-                    Console.WriteLine("Invalid move format. Use format like 'e2e4'.");
+                    var move = new Move(startSquare, targetSquare);
+                    var legalMoves = Generator.GenerateMoves(board);
+                    if (!legalMoves.Contains(move))
+                    {
+                        Console.WriteLine("Illegal move.");
+                        continue;
+                    }
+                    board.MakeMove(move);
                     continue;
-                }
-
-                int startSquare = Utils.ConvertToSquareIndex(input[0], input[1]);
-                int targetSquare = Utils.ConvertToSquareIndex(input[2], input[3]);
-
-                var legalMoves = Generator.GenerateMoves(board);
-                var playerMove = new Move(startSquare, targetSquare);
-
-                if (!legalMoves.Contains(playerMove))
-                {
-                    Console.WriteLine("Illegal move. Try again.");
+                default:
+                    Console.WriteLine("Unknown command.");
                     continue;
-                }
-
-                board.MakeMove(playerMove);
-            }
-            else
-            {
-                // Computer's turn
-                var computerMove = Engine.ChooseMove(board);
-
-                if (computerMove.Equals(new Move(0, 0)))
-                {
-                    Console.WriteLine("No legal moves for computer. Game over.");
-                    break;
-                }
-
-                Console.WriteLine($"Computer plays: {Utils.SquareToString(computerMove.StartSquare)}{Utils.SquareToString(computerMove.TargetSquare)}");
-                board.MakeMove(computerMove);
             }
         }
     }
