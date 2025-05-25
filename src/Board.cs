@@ -14,6 +14,8 @@ public class Board
     {
         Squares![move.TargetSquare] = Squares[move.StartSquare];
         Squares[move.StartSquare] = Piece.None;
+
+        IsWhiteToMove = !IsWhiteToMove;
     }
 
     public void LoadPositionFromFen(string fen)
@@ -65,5 +67,4 @@ public class Board
             }
         }
     }
-
 }
