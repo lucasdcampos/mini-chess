@@ -3,37 +3,65 @@
     static void Main(string[] args)
     {
         var board = new Board();
+        var random = new Random();
+
         while (true)
         {
             DrawBoard(board);
-            Console.Write("> ");
-            string? input = Console.ReadLine()?.Trim().ToLower();
 
-            if (input == "exit" || input == "quit")
-                break;
-
-            if (string.IsNullOrEmpty(input))
-                continue;
-
-            if (!IsValidMoveInput(input))
+            if (board.IsWhiteToMove)
             {
-                Console.WriteLine("Invalid move format. Use format like 'e2e4'.");
-                continue;
+                Console.Write("> ");
+                string? input = Console.ReadLine()?.Trim().ToLower();
+
+                if (input == "exit" || input == "quit" || input == "stop")
+                    break;
+
+                if (string.IsNullOrEmpty(input))
+                    continue;
+
+                if (!IsValidMoveInput(input))
+                {
+                    Console.WriteLine("Invalid move format. Use format like 'e2e4'.");
+                    continue;
+                }
+
+                int startSquare = ConvertToSquareIndex(input[0], input[1]);
+                int targetSquare = ConvertToSquareIndex(input[2], input[3]);
+
+                var legalMoves = Generator.GenerateMoves(board);
+                var playerMove = new Move(startSquare, targetSquare);
+
+                if (!legalMoves.Contains(playerMove))
+                {
+                    Console.WriteLine("Illegal move. Try again.");
+                    continue;
+                }
+
+                board.MakeMove(playerMove);
             }
-
-            int startSquare = ConvertToSquareIndex(input[0], input[1]);
-            int targetSquare = ConvertToSquareIndex(input[2], input[3]);
-
-            var legalMoves = Generator.GenerateMoves(board);
-            var move = new Move(startSquare, targetSquare);
-            if (!legalMoves.Contains(move))
+            else
             {
-                Console.WriteLine("Illegal move. Try again.");
-                continue;
+                // Computer's turn
+                var legalMoves = Generator.GenerateMoves(board);
+                if (legalMoves.Count == 0)
+                {
+                    Console.WriteLine("No legal moves for computer. Game over.");
+                    break;
+                }
+
+                var computerMove = legalMoves[random.Next(legalMoves.Count)];
+                Console.WriteLine($"Computer plays: {SquareToString(computerMove.StartSquare)}{SquareToString(computerMove.TargetSquare)}");
+                board.MakeMove(computerMove);
             }
-            board.MakeMove(new Move(startSquare, targetSquare));
         }
+    }
 
+    static string SquareToString(int square)
+    {
+        int x = square % 8;
+        int y = square / 8;
+        return $"{(char)('a' + x)}{(char)('1' + y)}";
     }
 
     static bool IsValidMoveInput(string input)
@@ -47,7 +75,6 @@
             input[2] is >= 'a' and <= 'h' &&
             input[3] is >= '1' and <= '8';
     }
-
 
     static int ConvertToSquareIndex(char file, char rank)
     {
@@ -78,7 +105,6 @@
         Console.Write("  +---+---+---+---+---+---+---+---+\n");
         Console.Write("    a   b   c   d   e   f   g   h\n");
     }
-
 
     static char GetPieceSymbol(int piece)
     {
