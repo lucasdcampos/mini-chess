@@ -19,6 +19,23 @@
                 if (string.IsNullOrEmpty(input))
                     continue;
 
+                switch (input)
+                {
+                    case "undo":
+                        board.UnmakeMove();
+                        continue;
+                    case "eval":
+                        var eval = Evaluator.Evaluate(board);
+                        Console.WriteLine($"Evaluation: {Evaluator.Evaluate(board)}");
+                        if(eval > 0)
+                            Console.WriteLine("White is winning.");
+                        else if (eval < 0)
+                            Console.WriteLine("Black is winning.");
+                        else
+                            Console.WriteLine("Position is equal.");
+                        continue;
+                }
+
                 if (!Utils.IsValidMoveInput(input))
                 {
                     Console.WriteLine("Invalid move format. Use format like 'e2e4'.");

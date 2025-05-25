@@ -37,4 +37,7 @@ public struct Move
         TargetSquare == other.TargetSquare;
 
     public override int GetHashCode() => HashCode.Combine(StartSquare, TargetSquare);
+
+    public bool IsCapture() => CapturedPiece != 0;
+    public bool IsPromotion() => PromotionPiece != 0;
 }

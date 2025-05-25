@@ -4,13 +4,11 @@ public static class Generator
     {
         var moves = new List<Move>();
         bool isWhiteToMove = board.IsWhiteToMove;
-        int ownColor = isWhiteToMove ? Piece.White : Piece.Black;
+        var pieceIndices = isWhiteToMove ? board.WhitePieces : board.BlackPieces;
 
-        for (int start = 0; start < 64; start++)
+        foreach (int start in pieceIndices)
         {
             int piece = board.Squares![start];
-            if (piece == Piece.None || piece.Color() != ownColor)
-                continue;
 
             switch (piece.Type())
             {
@@ -32,6 +30,71 @@ public static class Generator
         }
 
         return moves;
+    }
+
+    public static List<Move> GenerateCaptureMoves(Board board)
+    {
+        var captureMoves = new List<Move>();
+        bool isWhiteToMove = board.IsWhiteToMove;
+        int ownColor = isWhiteToMove ? Piece.White : Piece.Black;
+
+        for (int start = 0; start < 64; start++)
+        {
+            int piece = board.Squares![start];
+            if (piece == Piece.None || piece.Color() != ownColor)
+                continue;
+
+            int[] captureOffsets = piece.Type() switch
+            {
+                Piece.Pawn => new[] { (ownColor == Piece.White ? 7 : -9), (ownColor == Piece.White ? 9 : -7) },
+                Piece.Knight => new[] { -17, -15, -10, -6, 6, 10, 15, 17 },
+                Piece.King => new[] { -1, 1, -8, 8, -7, 7, -9, 9 },
+                Piece.Bishop => new[] { -9, -7, 7, 9 },
+                Piece.Rook => new[] { -8, -1, 1, 8 },
+                Piece.Queen => new[] { -8, -1, 1, 8, -9, -7, 7, 9 },
+                _ => Array.Empty<int>()
+            };
+
+            foreach (int offset in captureOffsets)
+            {
+                int target = start;
+                bool isSlidingPiece = piece.Type() is Piece.Bishop or Piece.Rook or Piece.Queen;
+
+                do
+                {
+                    target += offset;
+
+                    if (!IsOnBoard(target) || (isSlidingPiece && CrossesEdge(target - offset, target, offset)))
+                        break;
+
+                    int targetPiece = board.Squares![target];
+
+                    if (targetPiece == Piece.None)
+                    {
+                        if (!isSlidingPiece) break;
+                        continue;
+                    }
+
+                    if (targetPiece.Color() != ownColor)
+                        captureMoves.Add(new Move(start, target));
+
+                    break;
+                } while (isSlidingPiece);
+            }
+        }
+
+        captureMoves.Sort((a, b) =>
+        {
+            int aScore = 10 * Evaluator.GetPieceValue(board.Squares![a.TargetSquare].Type()) -
+                        Evaluator.GetPieceValue(board.Squares[a.StartSquare].Type());
+
+            int bScore = 10 * Evaluator.GetPieceValue(board.Squares[b.TargetSquare].Type()) -
+                        Evaluator.GetPieceValue(board.Squares[b.StartSquare].Type());
+
+            return bScore.CompareTo(aScore);
+        });
+
+        return captureMoves;
     }
 
     private static void GeneratePawnMoves(Board board, int start, int piece, List<Move> moves)

@@ -4,6 +4,10 @@ public class Board
     public const string InitialPositionFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     public bool IsWhiteToMove { get; private set; }
     private Stack<Move> m_history;
+
+    public IEnumerable<int> WhitePieces => GetPiecesByColor(Piece.White);
+    public IEnumerable<int> BlackPieces => GetPiecesByColor(Piece.Black);
+
     public Board()
     {
         Squares = new int[64];
@@ -35,15 +39,18 @@ public class Board
         IsWhiteToMove = !IsWhiteToMove;
     }
 
-    public void UnmakeMove(Move move)
+    public void UnmakeMove()
     {
-        var lastMove = m_history.Pop();
+        if (m_history.Count == 0)
+            throw new InvalidOperationException("No moves to unmake.");
 
-        Squares![move.StartSquare] = lastMove.MovedPiece;
-        Squares[move.TargetSquare] = lastMove.CapturedPiece;
+        var lastState = m_history.Pop();
 
-        IsWhiteToMove = !IsWhiteToMove;
+        Squares![lastState.StartSquare] = lastState.MovedPiece;
+        Squares[lastState.TargetSquare] = lastState.CapturedPiece;
+        IsWhiteToMove = lastState.WasWhiteToMove;
     }
+
     public void LoadPositionFromFen(string fen)
     {
         string piecePlacement = fen.Split(' ')[0];
@@ -91,6 +98,16 @@ public class Board
                 Squares![y * 8 + x] = piece;
                 x++;
             }
+        }
+    }
+
+    private IEnumerable<int> GetPiecesByColor(int color)
+    {
+        for (int i = 0; i < 64; i++)
+        {
+            int piece = Squares![i];
+            if (piece != Piece.None && piece.Color() == color)
+                yield return i;
         }
     }
 }
