@@ -3,7 +3,6 @@
     static void Main(string[] args)
     {
         var board = new Board();
-        var random = new Random();
 
         while (true)
         {
@@ -43,14 +42,14 @@
             else
             {
                 // Computer's turn
-                var legalMoves = Generator.GenerateMoves(board);
-                if (legalMoves.Count == 0)
+                var computerMove = Engine.ChooseMove(board);
+
+                if (computerMove.Equals(new Move(0, 0)))
                 {
                     Console.WriteLine("No legal moves for computer. Game over.");
                     break;
                 }
 
-                var computerMove = legalMoves[random.Next(legalMoves.Count)];
                 Console.WriteLine($"Computer plays: {SquareToString(computerMove.StartSquare)}{SquareToString(computerMove.TargetSquare)}");
                 board.MakeMove(computerMove);
             }

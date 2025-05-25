@@ -3,21 +3,47 @@ public class Board
     public int[]? Squares { get; private set; }
     public const string InitialPositionFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     public bool IsWhiteToMove { get; private set; }
+    private Stack<Move> m_history;
     public Board()
     {
         Squares = new int[64];
+        m_history = new Stack<Move>();
         IsWhiteToMove = true; // Should be set based on the FEN string later
         LoadPositionFromFen(InitialPositionFEN);
     }
 
     public void MakeMove(Move move)
     {
-        Squares![move.TargetSquare] = Squares[move.StartSquare];
+        int movedPiece = Squares![move.StartSquare];
+        int capturedPiece = Squares[move.TargetSquare];
+        int promotionPiece = 0;
+
+        var fullMove = new Move(
+            move.StartSquare,
+            move.TargetSquare,
+            movedPiece,
+            capturedPiece,
+            promotionPiece,
+            IsWhiteToMove
+        );
+
+        m_history.Push(fullMove);
+
+        Squares[move.TargetSquare] = movedPiece;
         Squares[move.StartSquare] = Piece.None;
 
         IsWhiteToMove = !IsWhiteToMove;
     }
 
+    public void UnmakeMove(Move move)
+    {
+        var lastMove = m_history.Pop();
+
+        Squares![move.StartSquare] = lastMove.MovedPiece;
+        Squares[move.TargetSquare] = lastMove.CapturedPiece;
+
+        IsWhiteToMove = !IsWhiteToMove;
+    }
     public void LoadPositionFromFen(string fen)
     {
         string piecePlacement = fen.Split(' ')[0];
